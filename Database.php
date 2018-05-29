@@ -5,11 +5,16 @@ class Database{
     public $password = "";
     public $dbname = "";
     public $con = "";
+    public $databaseNotConnected = false;
+    public $queryFailed = false;
+    public $tableDoesntExist = false;
+    public $tableExists = true;
     //conectivity functions
     //{
+        //default constructor that connects to the database[needed]
+        //Database([$_host,$_username,$_password,$_dbname])
         function Database(){
             $args = func_get_args();
-            //function __construct(str $_host,str $_username,str $_password,str $_dbname){}
             $this->hostname = $args[0];
             $this->username = $args[1];
             $this->password = $args[2];
@@ -19,32 +24,58 @@ class Database{
         protected function connect(){
             if(phpversion()<7){
                 $this->con=mysql_connect($this->hostname,$this->username,$this->password) or die(mysql_error());
-                mysql_select_db($this->dbname);
+                $ret = mysql_select_db($this->dbname);
+                if(!$ret){
+                    return $this->databaseNotConnected;
+                }
+                else{
+                    return $ret;
+                }
             }
             elseif(phpversion()>7){
-                $this->con=mysqli_connect($this->hostname,$this->username,$this->password,$this->dbname) or die(mysqli_error());
+                $this->con=mysqli_connect($this->hostname,$this->username,$this->password,$this->dbname) or die(mysqli_error($this->con));
+                if(!$this->con){
+                    return $this->databaseNotConnected;
+                }
+                else{
+                    return $this->con;
+                }
             }
         }
     //}
     //general functions
     //{
+        //allows you to fire a query to the connected db
+        //query($query)
         function query($query){
             if(phpversion()<7){
-                $ret = mysql_query($query,$this->con) or die("Error".mysql_error().":".$query);
-                return $ret;
+                $ret = mysql_query($query,$this->con) or die("Error".mysql_error()."<br>query:".$query);
+                if(!$ret){
+                    return $this->queryFailed;
+                }
+                else{
+                    return $ret;
+                }
             }
             elseif(phpversion()>7){
-                $ret = mysqli_query($this->con,$query) or die("Error".mysqli_error().":".$query);
-                return $ret;
+                $ret = mysqli_query($this->con,$query) or die("Error".mysqli_error($this->con)."<br>query:".$query);
+                if(!$ret){
+                    return $this->queryFailed;
+                }
+                else{
+                    return $ret;
+                }
             }
         }
         protected function error($text){
-            $error = "<br><br>Please refer to the summary of docs<br><br>";
+            $error = "<br><br>Please refer to the docs<br><br>";
             $error .= "SYNTAX ERROR::".$text."<br>";
             echo $error;
         }
     //}
     //mysql functions{
+        //performs the data fetch from the given array
+        //fetch_array($data)
         function fetch_array($data){
             $ret = "";
             if(phpversion()<7){
@@ -55,6 +86,8 @@ class Database{
             }
             return $ret;
         }
+        //performs the data fetch from the given associative array
+        //fetch_assoc($data)
         function fetch_assoc($data){
             $ret = "";
             if(phpversion()<7){
@@ -69,6 +102,10 @@ class Database{
     //query functions
     //{
         //insert functions
+        //fires the insert query on the database
+        //insert($table[,$values[,$returnQuery]])
+        //insert($table[,$columns,$values[,$returnQuery]])
+        //insert($table,$col1,$val1[,$col2,$val2,..[,$returnQuery]])
         function insert() {
             $args = func_get_args();
             $table = $args[0];
@@ -135,7 +172,7 @@ class Database{
                     return e;
                 }
             }
-            if($args[count($args)-1]==true){
+            if(is_bool($args[count($args)-1]) and $args[count($args)-1]==true){
                 return $query;
             }
             else{
@@ -143,13 +180,14 @@ class Database{
             }
         }
         //update functions
+        //fires the update query on the database
+        //update($table,$col=value)
+        //update($table,str/array $col,str/array $value[,str/array $whereClause[,bool $returnQuery]])
         function update() {
             $args = func_get_args();
             $cnt = count($args);
             $table = $args[0];
             $query = "";
-            //function update(str table,str col=value)
-            //function update(str table,str/array col,str/array value,[str/array whereClause,[bool true]])
             if($cnt==2){
                 $changes = $args[1];
                 $query = "update $table set $changes";
@@ -197,7 +235,7 @@ class Database{
             else{
                 return $this->error("invalid parameters");
             }
-            if($args[$cnt-1]==true){
+            if(is_bool($args[count($args)-1]) and $args[count($args)-1]==true){
                 return $query;
             }
             else{
@@ -205,11 +243,12 @@ class Database{
             }
         }
         //delete functions
+        //fires the delete query on the database
+        //delete($table[,str/array $where[,bool $returnQuery]])
         function delete(){
             $args = func_get_args();
             $table = $args[0];
             $cnt = count($args);
-            //function delete(str table[,str/array where[,bool true]])
             if($cnt==1 or ($cnt==2 and $args[1]==true)){
                 $query = "delete from $table";
             }
@@ -223,7 +262,7 @@ class Database{
             else{
                 $this->error("Invalid parameters");
             }
-            if($args[$cnt-1]==true){
+            if(is_bool($args[count($args)-1]) and $args[count($args)-1]==true){
                 return $query;
             }
             else{
@@ -233,13 +272,14 @@ class Database{
         //select functions
         function select(){
             $args = func_get_args();
-            $query = "";
-            $this->query($query);
+            $query = $args[0];
+            return $this->query($query);
         }
     //}
 //    //table functions
     //{
-    //    //drop desired
+        //fires the drop query on the database to drop [default]table whose name is given or [optional]other objects whose name and type are given
+        //drop(str/array $name[,str/array $type])
         function drop(){
             $args = func_get_args();
             $query = '';
@@ -261,19 +301,18 @@ class Database{
             }
             return $this->query($query);
         }
-//check if Table Exists
+        //check if Table Exists in database
+        //drop(str $name)
         function checkTable($name){
             $flag = 0;
             $list = $this->query("show tables");
-            while(($table = mysql_fetch_array($list))!=null){
+            while(($table = $this->fetch_array($list))!=null){
                 if($table[0]==$name){
-                    $flag = 1;
-                    return true;
-                    break;
+                    return $this->tableExists;
                 }
             }
             if($flag==0){
-                return false;
+                return $this->tableDoesntExist;
             }
         }
     }
