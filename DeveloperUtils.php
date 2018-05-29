@@ -1,9 +1,10 @@
 <?php
 //error
-function error(){
-    return "Invalid Parameters";
+function error($text){
+    echo $text;
 }
 //simpler post method protocol
+//post($name[,$index])
 function post(){
     $n = func_num_args();
     $a = func_get_args();
@@ -17,10 +18,11 @@ function post(){
         return $_POST[$a[0]][$a[1]];
     }
     else{
-        return error();
+        return error("Invalid Parameters");
     }
 }
 //simpler get method protocol
+//get($name[,$index])
 function get(){
     $n = func_num_args();
     $a = func_get_args();
@@ -34,10 +36,11 @@ function get(){
         return $_GET[$a[0]][$a[1]];
     }
     else{
-        return error();
+        return error("Invalid Parameters");
     }
 }
 //simpler request method protocol
+//request($name[,$index])
 function request(){
     $n = func_num_args();
     $a = func_get_args();
@@ -51,10 +54,11 @@ function request(){
         return $_REQUEST[$a[0]][$a[1]];
     }
     else{
-        return error();
+        return error("Invalid Parameters");
     }
 }
 //simpler files method protocol
+//files($name[,$index[,$index]])
 function files(){
     $n = func_num_args();
     $a = func_get_args();
@@ -71,10 +75,11 @@ function files(){
         return $_FILES[$a[0]][$a[1]][$a[2]];
     }
     else{
-        return error();
+        return error("Invalid Parameters");
     }
 }
 //simpler session method protocol
+//session($name[,$value])
 function session(){
     $n = func_num_args();
     $a = func_get_args();
@@ -89,24 +94,26 @@ function session(){
         return $_SESSION[$a[0]]=$a[1];
     }
     else{
-        return error();
+        return error("Invalid Parameters");
     }
 }
 //simpler server method protocol
+//server($name)
 function server($name){
     //server(str index)
     return $_SERVER[$name];
 }
 //simpler env method protocol
+//env($name)
 function env($name){
     //env(str index)
     return $_ENV[$name];
 }
 //simpler cookie method protocol
+//server($name[,value[,expire[, path[, domain[, secure[, httponly]]]]]])
 function cookie(){
     $n = func_num_args();
     $a = func_get_args();
-//    setcookie(name, value, expire, path, domain, secure, httponly);
     if($n==1){
         //cookie(str tagname)
         return $_COOKIE[$a[0]];
@@ -137,6 +144,7 @@ function cookie(){
     }
 }
 //gets the ip of the local machine(also client machine)
+//getIp()
 function getIp(){
     if(!empty(server('HTTP_CLIENT_IP'))){
         return server('HTTP_CLIENT_IP');
@@ -149,23 +157,29 @@ function getIp(){
     }
 }
 //generates an otp of numberof num digits
+//generateOTP($length)
 function generateOTP($num){
     $start = 10**($num-1);
     $end = (10**$num)-1;
     return rand($start,$end);
 }
-//creates a javascript alert of the value of the mentioned element
+//creates a javascript alert of the value of the mentioned text
+//alert($text)
 function alert($element){
     echo "<script>alert('".$element."');</script>";
 }
+//creates a javascript with mentioned code
+//javascript($code);
+function javascript($element){
+    echo "<script type='text/javascript'>$element</script>";
+}
 //creates json of the passed queries and headers
 //*****needs established data connection
+//makeJson($queries,$header[,$databaseobject])
 function makeJson(){
     $args = func_get_args();
-    $db = new Database();
-    //makeJson(array queries,array header)
-    if(count($args)==2){
-        //all queries
+    if(count($args)==3){
+        $db = $args[2];
         $allQueries = $args[0];
         $allHeaders = $args[1];
         if(count($allHeaders)==count($allQueries)){
@@ -191,13 +205,13 @@ function makeJson(){
     }
 }
 //makes string of an array
+//makeString($val[,$seperator[,$container]])
 function makeString(){
     $n = func_num_args();
-    $a = func_get_args();
+    $args = func_get_args();
     $val = "";
     $sep = ",";
     $container = "'";
-    //makeString(array val,str seperator,str container)
     if($n==2){
         $sep=$args[1];
     }
@@ -205,7 +219,7 @@ function makeString(){
         $sep=$args[1];
         $container=$args[2];
     }
-    foreach($a[0] as $v){
+    foreach($args[0] as $v){
         $val.="$container$v$container$sep";
     }
     $val = rtrim($val,$sep);
