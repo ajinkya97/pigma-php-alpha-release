@@ -11,6 +11,7 @@ class HTML{
         }
     //help in validating the text if its in the type specified
     //validation(str $type,obj $text[,int $maxlenght[,bool required]])
+    //available types are number,name,email,url,phone
     function validation(){
         $args = func_get_args();
         $cnt = count($args);
