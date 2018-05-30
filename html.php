@@ -1,4 +1,5 @@
 <?php
+//this class provieds html functions such as validation etc
 class HTML{
     function HTML(){
 //        echo "<!DOCTYPE HTML>";
