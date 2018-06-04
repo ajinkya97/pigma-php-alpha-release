@@ -111,7 +111,7 @@ class Database{
             $table = $args[0];
             $query = "";
             //insert into "tablename" values(val1,val2,val3...)
-            if(count($args)==2 or (count($args)==3 and $args[2]==true)){
+            if(count($args)==2 or (count($args)==3 and is_bool($args[2]))){
                 if(is_array($args[1])){
                     $val = makeString($args[1]);    
                 }
@@ -121,7 +121,7 @@ class Database{
                 $query = "insert into $table values ($val);";
             }
             //insert into "tablename"(col1,col2,col3...) values(val1,val2,val3...)
-            elseif(count($args)==3 or (count($args)==4 and $args[3]==true)){
+            elseif(count($args)==3 or (count($args)==4 and is_bool($args[3]))){
                 if(is_string($args[1]) and is_string($args[2])){
                     $col = makeString(explode(",",$args[1]),',','');
                     $val = makeString(explode(",",$args[2]));
@@ -138,8 +138,8 @@ class Database{
                     $query = "insert into $table($col) values ($val);";
                 }
                 elseif(is_array($args[1]) and is_array($args[2])){
-                    $col = makeString(explode(',',$args[1]),',','');
-                    $val = makeString($args[2]);
+                    $col = makeString($args[1],',','');
+                    $val = makeString($args[2],',');
                     $query = "insert into $table($col) values ($val);";
                 }
             }
